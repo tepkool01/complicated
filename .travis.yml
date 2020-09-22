@@ -1,0 +1,21 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t tepkool01/react-test -f ./client/Dockerfile.dev .
+
+script:
+  - docker run -e CI=true tepkool01/react-test npm test
+
+after_success:
+  - docker build -t tepkool01/multi-client ./client
+  - docker build -t tepkool01/multi-nginx ./nginx
+  - docker build -t tepkool01/multi-server ./server
+  - docker build -t tepkool01/multi-worker ./worker
+  # Login to docker cli
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  - docker push tepkool01/multi-client
+  - docker push tepkool01/multi-nginx
+  - docker push tepkool01/multi-server
+  - docker push tepkool01/multi-worker
