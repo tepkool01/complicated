@@ -3,7 +3,7 @@ services:
   - docker
 
 before_install:
-  - docker build -t tepkool01/react-test -f ./client/Dockerfile.dev .
+  - docker build -t tepkool01/react-test -f ./client/Dockerfile.dev ./client
 
 script:
   - docker run -e CI=true tepkool01/react-test npm test
@@ -19,3 +19,15 @@ after_success:
   - docker push tepkool01/multi-nginx
   - docker push tepkool01/multi-server
   - docker push tepkool01/multi-worker
+
+deploy:
+  provider: elasticbeanstalk
+  region: 'us-east-1'
+  app: 'multi-docker'
+  env: 'MultiDocker-env'
+  bucket_name: 'elasticbeanstalk-us-east-1-878527066650'
+  bucket_path: 'docker-multi'
+  on:
+    branch: master
+  access_key_id: $AWS_ACCESS_KEY
+  secret_access_key: $AWS_SECRET_KEY
