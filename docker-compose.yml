@@ -1,11 +1,21 @@
-version: '3'
+version: "3"
 services:
   postgres:
-    image: 'postgres:latest'
+    image: "postgres:latest"
     environment:
       - POSTGRES_PASSWORD=postgres_password
   redis:
-    image: 'redis:latest'
+    image: "redis:latest"
+  nginx:
+    depends_on:
+      - api
+      - client
+    restart: always
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./nginx
+    ports:
+      - "3050:80"
   api:
     depends_on:
       - postgres
@@ -13,9 +23,7 @@ services:
       dockerfile: Dockerfile.dev
       context: ./server
     volumes:
-      # don't try to overwrite this module
       - /app/node_modules
-      # Redirect /server contents to /app in container
       - ./server:/app
     environment:
       - REDIS_HOST=redis
@@ -26,7 +34,6 @@ services:
       - PGPASSWORD=postgres_password
       - PGPORT=5432
   client:
-    stdin_open: true
     build:
       dockerfile: Dockerfile.dev
       context: ./client
@@ -34,22 +41,12 @@ services:
       - /app/node_modules
       - ./client:/app
   worker:
-    build:
-      dockerfile: Dockerfile.dev
-      context: ./worker
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./worker
     volumes:
       - /app/node_modules
       - ./worker:/app
-  nginx:
-    depends_on:
-      - api
-      - client
-    restart: always
-    build:
-      dockerfile: Dockerfile.dev
-      context: ./nginx
-    ports:
-      - '3050:80'
